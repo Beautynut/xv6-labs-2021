@@ -77,10 +77,47 @@ sys_sleep(void)
 
 
 #ifdef LAB_PGTBL
+#define MAX_SCANNED_NUM (64)
 int
 sys_pgaccess(void)
 {
+  uint64 va, i;
+  int pagenum;
+  uint64 userbuf;
+  uint flag = ~PTE_A;
+  uint64 bitmask = 0;
+  pagetable_t pgtbl = myproc()->pagetable;
+
   // lab pgtbl: your code here.
+  if(argaddr(0, &va) < 0)
+    return -1;
+
+  if(argint(1, &pagenum) < 0)
+    return -1;
+
+  if(argaddr(2, &userbuf) < 0)
+    return -1;
+
+  if(pagenum > MAX_SCANNED_NUM) {
+    return -1;
+  }
+
+  for(i = 0; i < pagenum; i++) {
+    pte_t *pte;
+    if((pte = walk(pgtbl, va + i * PGSIZE, 0)) == 0) {
+      continue;
+    }
+    if((*pte & PTE_A) != 0) {
+      bitmask |= (1L << i);
+      *pte &= flag;
+    }
+  }
+
+  if(copyout(pgtbl, userbuf, (char*)&bitmask, sizeof(bitmask)) < 0) {
+    return -1;
+  }
+
+
   return 0;
 }
 #endif
