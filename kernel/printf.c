@@ -114,6 +114,19 @@ printf(char *fmt, ...)
     release(&pr.lock);
 }
 
+int
+backtrace()
+{
+  uint64 cur_fp = r_fp();
+  
+  while (cur_fp != PGROUNDUP(cur_fp)) {
+    uint64 ra = *(uint64*)(cur_fp - 8);
+    printf("%p\n", ra);
+    cur_fp = *(uint64*)(cur_fp -16);
+  }
+  return 0;
+}
+
 void
 panic(char *s)
 {
